@@ -10,6 +10,10 @@ require_relative 'converter'
 
 class Fantom5_Nanopub_Converter < RDF_File_Converter
 
+  # URIs string
+  $baseURI = 'http://rdf.biosemantics.org/nanopubs/riken/fantom5/'
+  $resourceURI = 'http://rdf.biosemantics.org/resource/riken/fantom5/'
+
   # Define some useful RDF vocabularies.(Note: Define subclass RDF vocabularies here)
   FOAF = RDF::FOAF
   DC = RDF::DC
@@ -26,8 +30,8 @@ class Fantom5_Nanopub_Converter < RDF_File_Converter
   FF = RDF::Vocabulary.new('http://purl.obolibrary.org/obo/FF_')
   IAO = RDF::Vocabulary.new('http://purl.obolibrary.org/obo/')
   FFU = RDF::Vocabulary.new('http://rdf.biosemantics.org/ontologies/fantom5Units#')
-  FANTOM5 = RDF::Vocabulary.new('http://rdf.biosemantics.org/data/riken/fantom5/data#')
-  $base = RDF::Vocabulary.new('http://rdf.biosemantics.org/nanopubs/riken/fantom5/')
+  FANTOM5 = RDF::Vocabulary.new($resourceURI)
+  $base = RDF::Vocabulary.new($baseURI)
 
 
   def initialize
@@ -98,20 +102,23 @@ class Fantom5_Nanopub_Converter < RDF_File_Converter
       chromosome, start_pos, end_pos, sign = $1, $2, $3, $4
 
       # setup nanopub
-      nanopub = $base['cage_clusters/' + @row_index.to_s]
-      assertion = nanopub['#assertion']
-      provenance = nanopub['#provenance']
-      publicationInfo = nanopub['#publicationInfo']
+      nanopub = RDF::URI.new("#{$baseURI}cage_clusters/#{@row_index.to_s}")
+      assertion = RDF::URI.new("#{$baseURI}cage_clusters/#{@row_index.to_s}#assertion")
+      provenance = RDF::URI.new("#{$baseURI}cage_clusters/#{@row_index.to_s}#provenance")
+      publicationInfo = RDF::URI.new("#{$baseURI}cage_clusters/#{@row_index.to_s}#publicationInfo")
 
       # main graph
       create_main_graph(nanopub, assertion, provenance, publicationInfo)
 
       # assertion graph
-      location = FANTOM5["loc_#{annotation}"]
+      cageCluster = RDF::URI.new("#{$resourceURI}cage_cluster_#{@row_index.to_s}")
+      location = RDF::URI.new("#{$resourceURI}annotation_location_#{@row_index.to_s}")
+
       orientation = sign == '+' ? RSO.forward : RSO.reverse
       save(assertion, [
-          [FANTOM5[annotation], RDF.type, SO.SO_0001917],
-          [FANTOM5[annotation], RSO.mapsTo, location],
+          [cageCluster, RDF.type, SO.SO_0001917],
+          [cageCluster, RSO.mapsTo, location],
+          [cageCluster, RDFS.label, RDF::Literal.new(annotation, :datatype => XSD.string)],
           [location, RDF.type, RSO.AnnotationLocation],
           [location, RSO.regionOf, HG19[chromosome]],
           [location, RSO.start, RDF::Literal.new(start_pos.to_i, :datatype => XSD.int)],
@@ -134,48 +141,93 @@ class Fantom5_Nanopub_Converter < RDF_File_Converter
   protected
   def create_class2_nanopub(annotation, transcriptAssociation, geneEntrez, geneHgnc, geneUniprot)
     if transcriptAssociation =~ /(\d+)bp_to_(.*)_5end/
-      base_offset, transcripts = $1, $2
-      transcripts = transcripts.split(',')
 
-      # setup nanopub
-      nanopub = RDF::Vocabulary.new($base['gene_associations/' + @row_index.to_s])
-      assertion = nanopub['#assertion']
-      provenance = nanopub['#provenance']
-      publicationInfo = nanopub['#publicationInfo']
+=begin
+        base_offset, transcripts = $1, $2
+        transcripts = transcripts.split(',')
+        transcriptForTss = transcripts[0]
 
-      transcriptForTss = transcripts[0]
-
-      for transcript in transcripts
-        if transcript =~ /^NM_/  #Note: NM transcript is preferred for tss_region url.
-          transcriptForTss = transcript
+        for transcript in transcripts
+          if transcript =~ /^NM_/  #Note: NM transcript is preferred for tss_region url.
+            transcriptForTss = transcript
+          end
         end
+=end
+
+      #puts "#{geneEntrez}"
+      entrezGenes = geneEntrez.split(',')
+      entrez_IDs = Array.new
+
+
+      for entrezGene in entrezGenes
+        entrez_id = entrezGene.split('entrezgene:')[1]
+
+        if entrez_id != '' && entrez_id !=nil
+          entrez_IDs << entrez_id
+        end
+
       end
 
-      tss = FANTOM5["tss_#{transcriptForTss}"]
-      entrez_id = geneEntrez.split(':')[1]
+      #puts "Raw entrezGene : #{geneEntrez}"
+      #puts "entrez_IDs size : #{entrez_IDs.size}"
 
-      # main graph
-      create_main_graph(nanopub, assertion, provenance, publicationInfo)
+     if  entrez_IDs.size > 0
+       # setup nanopub
+       nanopub = RDF::URI.new("#{$baseURI}gene_associations/#{@row_index.to_s}")
+       assertion = RDF::URI.new("#{$baseURI}gene_associations/#{@row_index.to_s}#assertion")
+       provenance = RDF::URI.new("#{$baseURI}gene_associations/#{@row_index.to_s}#provenance")
+       publicationInfo = RDF::URI.new("#{$baseURI}gene_associations/#{@row_index.to_s}#publicationInfo")
+
+       # main graph
+       create_main_graph(nanopub, assertion, provenance, publicationInfo)
+
 
       # assertion graph
-      save(assertion, [
-          [FANTOM5[annotation], RSO.is_observation_of, tss],
-          [tss, RDF.type, SO.TSS_region],
-          [tss, SO.part_of, RDF::URI.new("http://bio2rdf.org/geneid:#{entrez_id}")]
-      ])
+       cageCluster = RDF::URI.new("#{$resourceURI}cage_cluster_#{@row_index.to_s}")
+       tssRegion = RDF::URI.new("#{$resourceURI}tss_region_#{@row_index.to_s}")
+       #tssRegion = RDF::URI.new("#{$resourceURI}tss_region_#{transcriptForTss}")
+
+       save(assertion, [
+           [cageCluster, RSO.is_observation_of, tssRegion],
+           [tssRegion, RDF.type, SO.TSS_region]
+       ])
+          #[tssRegion, SO.part_of, RDF::URI.new("http://bio2rdf.org/geneid:#{entrez_id}")]
+
+       noOfGenes = 0
+
+       for geneID in entrez_IDs
+
+         noOfGenes +=1
+
+         gene = RDF::URI.new("#{$resourceURI}gene_#{@row_index.to_s}_#{noOfGenes}")
+
+         #puts geneID
+
+         save(assertion, [
+             [tssRegion, SO.associated_with, gene],
+             [gene, RDF.type, SO.SO_0000704],
+             [gene, DC.identifier, RDF::Literal.new(geneID, :datatype => XSD.int)],
+             [gene, RDF.seeAlso, RDF::URI.new("http://linkedlifedata.com/resource/entrezgene/id/#{geneID}")]
+         ])
+
+       end
 
       # provenance graph
-      create_provenance_graph(provenance, assertion)
+       create_provenance_graph(provenance, assertion)
 
       # publication info graph
-      create_publication_info_graph(publicationInfo, nanopub)
+       create_publication_info_graph(publicationInfo, nanopub)
 
       #puts "inserted nanopub <#{nanopub}>"
+
+     end
+
+
     else
       if transcriptAssociation != 'NA'
         puts "Unknown transcript association format: #{transcriptAssociation}"
       else
-        puts "no transcript association on line #{@line_number}"
+        #puts "no transcript association on line #{@line_number}"
       end
     end
   end
@@ -188,27 +240,28 @@ class Fantom5_Nanopub_Converter < RDF_File_Converter
 
         if tpm.to_f > 0 #$ffont[sample_index] == @options[:celltype]
 
-          nanopub = RDF::URI.new("http://rdf.biosemantics.org/nanopubs/riken/fantom5/ff_expressions/#{@row_index.to_s}/#{sample_index.to_s}")
-          assertion = RDF::URI.new("http://rdf.biosemantics.org/nanopubs/riken/fantom5/ff_expressions/#{@row_index.to_s}/#{sample_index.to_s}#assertion")
-          provenance = RDF::URI.new("http://rdf.biosemantics.org/nanopubs/riken/fantom5/ff_expressions/#{@row_index.to_s}/#{sample_index.to_s}#provenance")
-          publicationInfo = RDF::URI.new("http://rdf.biosemantics.org/nanopubs/riken/fantom5/ff_expressions/#{@row_index.to_s}/#{sample_index.to_s}#provenance")
-
-          measurementValue = RDF::URI.new("http://rdf.biosemantics.org/data/riken/fantom5/data#measurementValue/#{@row_index.to_s}/#{sample_index.to_s}")
-          annotationURI = RDF::URI.new('http://rdf.biosemantics.org/data/riken/fantom5/data#'+annotation)
+          # setup nanopub
+          nanopub = RDF::URI.new("#{$baseURI}ff_expressions/#{@row_index.to_s}_#{sample_index.to_s}")
+          assertion = RDF::URI.new("#{$baseURI}ff_expressions/#{@row_index.to_s}_#{sample_index.to_s}#assertion")
+          provenance = RDF::URI.new("#{$baseURI}ff_expressions/#{@row_index.to_s}_#{sample_index.to_s}#provenance")
+          publicationInfo = RDF::URI.new("#{$baseURI}ff_expressions/#{@row_index.to_s}_#{sample_index.to_s}#publicationInfo")
 
           # main graph
           create_main_graph(nanopub, assertion, provenance, publicationInfo)
 
           # assertion graph
+          cageCluster = RDF::URI.new("#{$resourceURI}cage_cluster_#{@row_index.to_s}")
+          measurementValue = RDF::URI.new("#{$resourceURI}measurement_value_#{@row_index.to_s}_#{sample_index.to_s}")
+
           save(assertion, [
-              [annotationURI, SO['associated_with'], measurementValue],
+              [cageCluster, SO['associated_with'], measurementValue],
               # IAO_0000032 = scalar measurement datum
               [measurementValue, RDF.type, IAO.IAO_0000032],
               # IAO_0000004 = has_measurement_value
               [measurementValue, IAO['IAO_0000004'], RDF::Literal.new(tpm.to_f, :datatype => RDF::XSD.double)],
               # IAO_0000039 = has_measurement_unit_label
               [measurementValue, IAO['IAO_0000039'], FFU.TPM],
-              [annotationURI, RSO.observed_in, FF[$ffont[sample_index]]]
+              [cageCluster, RSO.observed_in, FF[$ffont[sample_index]]]
           ])
 
           # provenance graph
@@ -241,6 +294,8 @@ class Fantom5_Nanopub_Converter < RDF_File_Converter
         [nanopub, PAV.createdBy, RDF::Literal.new('Mark Thompson', :datatype => XSD.string)],
         [nanopub, PAV.createdBy, RDF::Literal.new('Zuotian Tatum', :datatype => XSD.string)],
         [nanopub, PAV.createdBy, RDF::Literal.new('Rajaram Kaliyaperumal', :datatype => XSD.string)],
+        [nanopub, PAV.createdBy, RDF::Literal.new('Eelke van der Horst', :datatype => XSD.string)],
+        [nanopub, PAV.createdBy, RDF::Literal.new('Kees Burger', :datatype => XSD.string)],
         [nanopub, DC.rights, RDF::URI.new('http://creativecommons.org/licenses/by/3.0/')],
         [nanopub, DC.rightsHolder, RDF::URI.new('http://www.riken.jp/')],
         [nanopub, DC.created, RDF::Literal.new(Time.now.utc, :datatype => XSD.dateTime)]

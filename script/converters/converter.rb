@@ -133,7 +133,7 @@ class RDF_File_Converter < RDF_Converter
 
       $NoOfStatements += 1
 
-      if $NoOfStatements > 1000000
+      if $NoOfStatements == 1000000
         closeFile()
       end
     end

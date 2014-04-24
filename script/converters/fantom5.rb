@@ -207,7 +207,7 @@ class Fantom5_Nanopub_Converter < RDF_File_Converter
              [tssRegion, SO.associated_with, gene],
              [gene, RDF.type, SO.SO_0000704],
              [gene, DC.identifier, RDF::Literal.new(geneID, :datatype => XSD.int)],
-             [gene, RDF.seeAlso, RDF::URI.new("http://linkedlifedata.com/resource/entrezgene/id/#{geneID}")]
+             [gene, RDFS.seeAlso, RDF::URI.new("http://linkedlifedata.com/resource/entrezgene/id/#{geneID}")]
          ])
 
        end

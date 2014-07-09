@@ -72,6 +72,8 @@ class Fantom5_Nanopub_Converter < RDF_File_Converter
 
     @row_index += 1
     annotation, shortDesc, description, transcriptAssociation, geneEntrez, geneHgnc, geneUniprot, *samples = row.split("\t")
+    
+    if (@row_index == 76655 || @row_index == 76656 || @row_index == 76657 || @row_index == 76658 || @row_index == 76659 || @row_index == 76660)
 
     case @options[:subtype]
       when 'cage_clusters'
@@ -80,6 +82,8 @@ class Fantom5_Nanopub_Converter < RDF_File_Converter
         create_class2_nanopub(annotation, transcriptAssociation, geneEntrez, geneHgnc, geneUniprot)
       when 'ff_expressions'
         create_class3_nanopub(annotation, samples)
+    end
+    
     end
 
   end
@@ -207,7 +211,7 @@ class Fantom5_Nanopub_Converter < RDF_File_Converter
              [tssRegion, SO.associated_with, gene],
              [gene, RDF.type, SO.SO_0000704],
              [gene, DC.identifier, RDF::Literal.new(geneID, :datatype => XSD.int)],
-             [gene, RDFS.seeAlso, RDF::URI.new("http://linkedlifedata.com/resource/entrezgene/id/#{geneID}")]
+             [gene, RDF.seeAlso, RDF::URI.new("http://linkedlifedata.com/resource/entrezgene/id/#{geneID}")]
          ])
 
        end
@@ -232,6 +236,9 @@ class Fantom5_Nanopub_Converter < RDF_File_Converter
     end
   end
 
+
+  $triplesPerNP = 4+5+10
+
   protected
   def create_class3_nanopub(annotation, samples)
     if samples.is_a?(Array)
@@ -239,6 +246,11 @@ class Fantom5_Nanopub_Converter < RDF_File_Converter
       samples.each_with_index { |tpm, sample_index|
 
         if tpm.to_f > 0 #$ffont[sample_index] == @options[:celltype]
+
+          #@totalTriples +=$triplesPerNP
+
+          #puts "No of triples ==> #{$totalTriples}"
+
 
           # setup nanopub
           nanopub = RDF::URI.new("#{$baseURI}ff_expressions/#{@row_index.to_s}_#{sample_index.to_s}")
@@ -270,7 +282,11 @@ class Fantom5_Nanopub_Converter < RDF_File_Converter
           # publication info graph
           create_publication_info_graph(publicationInfo, nanopub)
 
+        else
+          #puts "TPM ==> #{tpm}"
+
         end
+
       }
     else
       puts "Not an array of TPM values: #{samples} on line number #{@line_number}"
@@ -288,6 +304,14 @@ class Fantom5_Nanopub_Converter < RDF_File_Converter
 
   private
   def create_publication_info_graph(publicationInfo, nanopub)
+
+=begin
+    save(publicationInfo, [
+        [nanopub, RDF.seeAlso, RDF::URI.new("http://rdf.biosemantics.org/nanopubs/riken/fantom5/publicationInfoShared")],
+        [nanopub, DC.created, RDF::Literal.new(Time.now.utc, :datatype => XSD.dateTime)]
+        ])
+=end
+
     save(publicationInfo, [
         [nanopub, PAV.authoredBy, RDF::URI.new('http://rdf.biosemantics.org/data/riken/fantom5/project')],
         [nanopub, PAV.createdBy, RDF::Literal.new('Andrew Gibson', :datatype => XSD.string)] ,
@@ -300,6 +324,8 @@ class Fantom5_Nanopub_Converter < RDF_File_Converter
         [nanopub, DC.rightsHolder, RDF::URI.new('http://www.riken.jp/')],
         [nanopub, DC.created, RDF::Literal.new(Time.now.utc, :datatype => XSD.dateTime)]
     ])
+
+
   end
 end
 

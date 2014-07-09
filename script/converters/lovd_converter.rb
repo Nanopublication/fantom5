@@ -58,8 +58,137 @@ class RDF_Converter
       closeFile()
     end
 
-  end 
+  end
   
+  
+  def convertFromAPI
+    File.open(@options[:input], 'r') do |f|
+
+      time_start = Time.now.utc
+
+      while line = f.gets
+        @line_number += 1
+        if line =~ /^#{HEADER_PREFIX}/
+          convert_header_row(line.strip)
+          
+        else
+          
+          geneSymbol = line.split("\t")[1]   
+          
+          #@options[:output] = @options[:output]+"_"+geneSymbol       
+          
+          url = "http://databases.lovd.nl/whole_genome/api/rest.php/variants/#{geneSymbol}/unique"
+          
+          #puts url
+          
+          begin
+            response = RestClient.get(url)
+            
+            xmlfile = response.body
+            
+            xmldoc = Document.new(xmlfile)
+            
+            
+            xmldoc.elements.each("feed/entry/content") {
+                |e|
+  
+              variantData = e.text.split(" ")
+            
+              variantDBId = "-NA-"
+              # DNA change
+              dnaChange =  "-NA-"
+              # Trancript ID  
+              transcriptID = "-NA-"
+              # Variant genomic position
+              gPos = "-NA-"
+              # Variant template
+              template = "-NA-"
+              # Variant technique
+              technique = "-NA-"
+              # Pubmed ID to the publication where variant study is published
+              pubmed = "-NA-"
+              # Transcript ID data
+              transcriptIDData = nil
+              # Variant genomic position data
+              gPosData =  nil  
+             
+              variantData.each { |data|
+                
+                if(data.include? "Variant/DBID:")
+                  variantDBId = data.gsub("Variant/DBID:","")
+                  
+                elsif(data.include? "Variant/DNA:")
+                  dnaChange =  data.gsub("Variant/DNA:","")    
+                
+                elsif(data.include? "position_mRNA:")
+                  transcriptIDData = data.gsub("position_mRNA:","")  
+                  
+                elsif(data.include? "position_genomic:")
+                  gPosData =  data.gsub("position_genomic:","")        
+                  
+                  end
+              } 
+              
+             
+            
+              if(transcriptIDData.include? ":")
+                transcriptID = transcriptIDData.split(":")[0]
+            
+              end
+              
+            
+              if(gPosData.include? ":")
+                gPos = gPosData.split(":")[1]
+            
+                if(dnaChange.include? "del")
+                  gPos = "g."+gPos+"del"
+                end
+            
+                if(dnaChange.include? "dup")
+                  gPos = "g."+gPos+"dup"
+                end
+            
+                if(dnaChange.include? ">")
+                  subData = dnaChange.split(">")
+                  firstChar = subData[0]
+                  lastChar = subData[1]
+                  gPos = "g."+gPos+firstChar[firstChar.length-1]+">"+lastChar[0]
+                end
+            
+                if(dnaChange.include? "ins")
+                  insData = dnaChange.split("ins")
+                  gPos = "g."+gPos+"ins"+insData[1]
+                end
+            
+              end
+              
+              variantRow = "#{transcriptID}\t#{variantDBId}\t#{dnaChange}\t#{gPos}\t#{template}\t#{technique}\t#{pubmed}"
+            
+              convert_row_api(line, variantRow)
+              }            
+            rescue
+              @genesSkipped = @genesSkipped+1
+              #$logger.info("============ Error with the URL =#{url} ============") 
+            
+            end
+        end
+        
+        $logger.info("============ No. of gene done =#{@line_number} ============") 
+        $logger.info("============ No. of gene skipped =#{@genesSkipped} ============") 
+
+        if @line_number % 10 == 0
+          #$logger.info("============ running time: #{(Time.now.utc - time_start).to_s} ============")
+        end
+
+      end
+      $logger.info("============ running time total: #{(Time.now.utc - time_start).to_s} ============")
+    end
+
+    if $saveFiles
+      closeFile()
+    end
+
+  end
 
   protected
   def convert_header_row(row)

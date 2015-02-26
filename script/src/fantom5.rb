@@ -173,9 +173,8 @@ class Fantom5_Nanopub_Converter < RDF_File_Converter
        number_of_genes = 0
 
        for gene_id in entrez_ids
-
+         
          number_of_genes +=1
-
          gene = RDF::URI.new("#{$resource_url}gene_#{@row_index.to_s}_#{number_of_genes}")
          
          save(assertion, [
@@ -195,8 +194,7 @@ class Fantom5_Nanopub_Converter < RDF_File_Converter
        create_publication_info_graph(publication_info, nanopub)
 
      end
-
-
+     
     else
       if transcript_association != 'NA'
         puts "Unknown transcript association format: #{transcript_association}"
@@ -212,8 +210,7 @@ class Fantom5_Nanopub_Converter < RDF_File_Converter
 
       samples.each_with_index { |tpm, sample_index|
 
-        if tpm.to_f > 0
-          
+        if tpm.to_f > 0          
           # setup nanopub
           nanopub = RDF::URI.new("#{$base_url}ff_expressions/#{@row_index.to_s}_#{sample_index.to_s}")
           assertion = RDF::URI.new("#{$base_url}ff_expressions/#{@row_index.to_s}_#{sample_index.to_s}#assertion")
@@ -267,16 +264,19 @@ class Fantom5_Nanopub_Converter < RDF_File_Converter
     save(publication_info, [
         [nanopub, PAV.authoredBy, RDF::URI.new('http://rdf.biosemantics.org/data/riken/fantom5/project')],
         [nanopub, PAV.createdBy, RDF::Literal.new('Andrew Gibson', :datatype => XSD.string)] ,
-        [nanopub, PAV.createdBy, RDF::Literal.new('Mark Thompson', :datatype => XSD.string)],
-        [nanopub, PAV.createdBy, RDF::Literal.new('Zuotian Tatum', :datatype => XSD.string)],
-        [nanopub, PAV.createdBy, RDF::Literal.new('Rajaram Kaliyaperumal', :datatype => XSD.string)],
-        [nanopub, PAV.createdBy, RDF::Literal.new('Eelke van der Horst', :datatype => XSD.string)],
-        [nanopub, PAV.createdBy, RDF::Literal.new('Kees Burger', :datatype => XSD.string)],
+        # E-7370-2012 = Mark Thompson
+        [nanopub, PAV.createdBy, RDF::URI.new('http://www.researcherid.com/rid/E-7370-2012')],
+        # B-5852-2012 = Zuotian Tatum
+        [nanopub, PAV.createdBy, RDF::URI.new('http://www.researcherid.com/rid/B-5852-2012')],
+        # J-7843-2013 = Rajaram Kaliyaperumal
+        [nanopub, PAV.createdBy, RDF::URI.new('http://www.researcherid.com/rid/J-7843-2013')],
+        # 0000-0002-8777-5612 = Eelke van der Horst
+        [nanopub, PAV.createdBy, RDF::URI.new('http://orcid.org/0000-0002-8777-5612')],
         [nanopub, DC.rights, RDF::URI.new('http://creativecommons.org/licenses/by/3.0/')],
         [nanopub, DC.rightsHolder, RDF::URI.new('http://www.riken.jp/')],
-        [nanopub, DC.created, RDF::Literal.new(Time.now.utc, :datatype => XSD.dateTime)]
+        [nanopub, DC.created, RDF::Literal.new(Time.now.utc, :datatype => XSD.dateTime)],
+        [nanopub, DC.hasVersion, RDF::Literal.new(@NANOPUB_VERSION.to_f, :datatype => RDF::XSD.double)]
     ])
-
 
   end
 end

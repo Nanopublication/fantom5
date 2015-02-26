@@ -52,12 +52,14 @@ class Fantom5_Nanopub_Converter < RDF_File_Converter
     $ffont = File.read('ffont.rb').split(", ")
     @NANOPUB_VERSION = 2
     # URIs string
-    $base_url = "http://rdf.biosemantics.org/nanopubs/riken/fantom5/#{@NANOPUB_VERSION}/"
-    $resource_url = "http://rdf.biosemantics.org/resource/riken/fantom5/#{@NANOPUB_VERSION}/"
+    $base_url = "http://rdf.biosemantics.org/nanopubs/riken/fantom5/version_#{@NANOPUB_VERSION}/"
+    $resource_url = "http://rdf.biosemantics.org/resource/riken/fantom5/version_#{@NANOPUB_VERSION}/"
     super(RDF, NP, prefixes)
   end
 
   @@AnnotationSignChars = '+-'
+  @CREATE_PROVENANCE_GRAPH = false
+  @CREATE_PUBLICATION_INFO_GRAPH = false
 
   def convert_header_row(row)
     # do nothing
@@ -123,10 +125,14 @@ class Fantom5_Nanopub_Converter < RDF_File_Converter
       ])
 
       # provenance graph
-      create_provenance_graph(provenance, assertion)
+      if @CREATE_PROVENANCE_GRAPH
+        create_provenance_graph(provenance, assertion)
+      end
 
       # publication info graph
-      create_publication_info_graph(publication_info, nanopub)
+      if @CREATE_PUBLICATION_INFO_GRAPH
+        create_publication_info_graph(publication_info, nanopub)
+      end
 
       #puts "inserted nanopub <#{nanopub}>"
     else
@@ -184,10 +190,14 @@ class Fantom5_Nanopub_Converter < RDF_File_Converter
        end
 
       # provenance graph
-       create_provenance_graph(provenance, assertion)
+      if @CREATE_PROVENANCE_GRAPH
+        create_provenance_graph(provenance, assertion)
+      end
        
       # publication info graph
-       create_publication_info_graph(publication_info, nanopub)
+      if @CREATE_PUBLICATION_INFO_GRAPH
+        create_publication_info_graph(publication_info, nanopub)
+      end
 
      end
      
@@ -232,10 +242,14 @@ class Fantom5_Nanopub_Converter < RDF_File_Converter
           ])
           
           # provenance graph
-          create_provenance_graph(provenance, assertion)
+          if @CREATE_PROVENANCE_GRAPH
+            create_provenance_graph(provenance, assertion)
+          end
 
           # publication info graph
-          create_publication_info_graph(publication_info, nanopub)
+          if @CREATE_PUBLICATION_INFO_GRAPH
+            create_publication_info_graph(publication_info, nanopub)
+          end
 
         else
           #puts "Sample #{$ffont[sample_index]} has tpm value ZERO"          

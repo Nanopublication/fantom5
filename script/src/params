@@ -1,6 +1,6 @@
 --input
-/home/raja/fantom5/fantom5DS.txt
+/home/rajaram/work/fantom5-work/fantom5/dataset/fantom5DS-new.txt
 --output
-/home/raja/fantom5/fantom5-np/fantom5
+/home/rajaram/work/fantom5-work/fantom5/test/np1/fantom5_np_type1_version2
 --subtype
-ff_expressions
+cage_clusters

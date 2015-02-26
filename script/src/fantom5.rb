@@ -8,11 +8,7 @@ require 'rdf'
 require 'slop'
 require_relative 'converter'
 
-class Fantom5_Nanopub_Converter < RDF_File_Converter
-
-  # URIs string
-  $base_url = 'http://rdf.biosemantics.org/nanopubs/riken/fantom5/'
-  $resource_url = 'http://rdf.biosemantics.org/resource/riken/fantom5/'
+class Fantom5_Nanopub_Converter < RDF_File_Converter  
 
   # Define some useful RDF vocabularies.(Note: Define subclass RDF vocabularies here)
   FOAF = RDF::FOAF
@@ -54,11 +50,11 @@ class Fantom5_Nanopub_Converter < RDF_File_Converter
 
     # read all cell types
     $ffont = File.read('ffont.rb').split(", ")
-
-    @NANOPUB_VERSION = 1.0
-
+    @NANOPUB_VERSION = 2
+    # URIs string
+    $base_url = 'http://rdf.biosemantics.org/nanopubs/riken/fantom5/#{@NANOPUB_VERSION}/'
+    $resource_url = 'http://rdf.biosemantics.org/resource/riken/fantom5/#{@NANOPUB_VERSION}/'
     super(RDF, NP, prefixes)
-
   end
 
   @@AnnotationSignChars = '+-'

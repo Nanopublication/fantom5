@@ -1,12 +1,8 @@
 require 'rdf'
-require 'rdf/allegro_graph'
 require 'slop'
 require 'logger'
 require 'zlib'
 require 'rubygems'
-require 'rest_client'
-require 'rexml/document'
-include REXML
 
 class RDF_Converter
 

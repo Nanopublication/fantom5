@@ -11,8 +11,8 @@ require_relative 'converter'
 class Fantom5_Nanopub_Converter < RDF_File_Converter
 
   # URIs string
-  $baseURI = 'http://rdf.biosemantics.org/nanopubs/riken/fantom5/'
-  $resourceURI = 'http://rdf.biosemantics.org/resource/riken/fantom5/'
+  $base_url = 'http://rdf.biosemantics.org/nanopubs/riken/fantom5/'
+  $resource_url = 'http://rdf.biosemantics.org/resource/riken/fantom5/'
 
   # Define some useful RDF vocabularies.(Note: Define subclass RDF vocabularies here)
   FOAF = RDF::FOAF
@@ -30,8 +30,8 @@ class Fantom5_Nanopub_Converter < RDF_File_Converter
   FF = RDF::Vocabulary.new('http://purl.obolibrary.org/obo/FF_')
   IAO = RDF::Vocabulary.new('http://purl.obolibrary.org/obo/')
   FFU = RDF::Vocabulary.new('http://rdf.biosemantics.org/ontologies/fantom5Units#')
-  FANTOM5 = RDF::Vocabulary.new($resourceURI)
-  $base = RDF::Vocabulary.new($baseURI)
+  FANTOM5 = RDF::Vocabulary.new($resource_url)
+  $base = RDF::Vocabulary.new($base_url)
 
 
   def initialize
@@ -55,7 +55,7 @@ class Fantom5_Nanopub_Converter < RDF_File_Converter
     # read all cell types
     $ffont = File.read('ffont.rb').split(", ")
 
-    $npVersion = 1.0
+    @NANOPUB_VERSION = 1.0
 
     super(RDF, NP, prefixes)
 
@@ -101,24 +101,24 @@ class Fantom5_Nanopub_Converter < RDF_File_Converter
       chromosome, start_pos, end_pos, sign = $1, $2, $3, $4
 
       # setup nanopub
-      nanopub = RDF::URI.new("#{$baseURI}cage_clusters/#{@row_index.to_s}")
-      assertion = RDF::URI.new("#{$baseURI}cage_clusters/#{@row_index.to_s}#assertion")
-      provenance = RDF::URI.new("#{$baseURI}cage_clusters/#{@row_index.to_s}#provenance")
-      publicationInfo = RDF::URI.new("#{$baseURI}cage_clusters/#{@row_index.to_s}#publicationInfo")
+      nanopub = RDF::URI.new("#{$base_url}cage_clusters/#{@row_index.to_s}")
+      assertion = RDF::URI.new("#{$base_url}cage_clusters/#{@row_index.to_s}#assertion")
+      provenance = RDF::URI.new("#{$base_url}cage_clusters/#{@row_index.to_s}#provenance")
+      publicationInfo = RDF::URI.new("#{$base_url}cage_clusters/#{@row_index.to_s}#publicationInfo")
 
       # main graph
       create_main_graph(nanopub, assertion, provenance, publicationInfo)
 
       # assertion graph
-      cageCluster = RDF::URI.new("#{$resourceURI}cage_cluster_#{@row_index.to_s}")
-      location = RDF::URI.new("#{$resourceURI}annotation_location_#{@row_index.to_s}")
+      cage_cluster = RDF::URI.new("#{$resource_url}cage_cluster_#{@row_index.to_s}")
+      location = RDF::URI.new("#{$resource_url}annotation_location_#{@row_index.to_s}")
 
       orientation = sign == '+' ? RSO.forward : RSO.reverse
       save(assertion, [
           # SO_0001917 = cage cluster
-          [cageCluster, RDF.type, SO['SO_0001917']],
-          [cageCluster, RSO['mapsTo'], location],
-          [cageCluster, RDFS.label, RDF::Literal.new(annotation, :datatype => XSD.string)],
+          [cage_cluster, RDF.type, SO['SO_0001917']],
+          [cage_cluster, RSO['mapsTo'], location],
+          [cage_cluster, RDFS.label, RDF::Literal.new(annotation, :datatype => XSD.string)],
           [location, RDF.type, RSO['AnnotationLocation']],
           [location, RSO['regionOf'], HG19[chromosome]],
           [location, RSO['start'], RDF::Literal.new(start_pos.to_i, :datatype => XSD.int)],
@@ -155,21 +155,21 @@ class Fantom5_Nanopub_Converter < RDF_File_Converter
       
      if  entrez_IDs.size > 0
        # setup nanopub
-       nanopub = RDF::URI.new("#{$baseURI}gene_associations/#{@row_index.to_s}")
-       assertion = RDF::URI.new("#{$baseURI}gene_associations/#{@row_index.to_s}#assertion")
-       provenance = RDF::URI.new("#{$baseURI}gene_associations/#{@row_index.to_s}#provenance")
-       publicationInfo = RDF::URI.new("#{$baseURI}gene_associations/#{@row_index.to_s}#publicationInfo")
+       nanopub = RDF::URI.new("#{$base_url}gene_associations/#{@row_index.to_s}")
+       assertion = RDF::URI.new("#{$base_url}gene_associations/#{@row_index.to_s}#assertion")
+       provenance = RDF::URI.new("#{$base_url}gene_associations/#{@row_index.to_s}#provenance")
+       publicationInfo = RDF::URI.new("#{$base_url}gene_associations/#{@row_index.to_s}#publicationInfo")
 
        # main graph
        create_main_graph(nanopub, assertion, provenance, publicationInfo)
 
       # assertion graph
-       cageCluster = RDF::URI.new("#{$resourceURI}cage_cluster_#{@row_index.to_s}")
-       tssRegion = RDF::URI.new("#{$resourceURI}tss_region_#{@row_index.to_s}")
-       #tssRegion = RDF::URI.new("#{$resourceURI}tss_region_#{transcriptForTss}")
+       cage_cluster = RDF::URI.new("#{$resource_url}cage_cluster_#{@row_index.to_s}")
+       tssRegion = RDF::URI.new("#{$resource_url}tss_region_#{@row_index.to_s}")
+       #tssRegion = RDF::URI.new("#{$resource_url}tss_region_#{transcriptForTss}")
 
        save(assertion, [
-           [cageCluster, RSO['is_observation_of'], tssRegion],
+           [cage_cluster, RSO['is_observation_of'], tssRegion],
            # SO_0001240 = TSS_region
            [tssRegion, RDF.type, SO['SO_0001240']]
        ])
@@ -180,7 +180,7 @@ class Fantom5_Nanopub_Converter < RDF_File_Converter
 
          noOfGenes +=1
 
-         gene = RDF::URI.new("#{$resourceURI}gene_#{@row_index.to_s}_#{noOfGenes}")
+         gene = RDF::URI.new("#{$resource_url}gene_#{@row_index.to_s}_#{noOfGenes}")
          
          save(assertion, [
              [tssRegion, SO['so_associated_with'], gene],
@@ -219,27 +219,27 @@ class Fantom5_Nanopub_Converter < RDF_File_Converter
         if tpm.to_f > 0
           
           # setup nanopub
-          nanopub = RDF::URI.new("#{$baseURI}ff_expressions/#{@row_index.to_s}_#{sample_index.to_s}")
-          assertion = RDF::URI.new("#{$baseURI}ff_expressions/#{@row_index.to_s}_#{sample_index.to_s}#assertion")
-          provenance = RDF::URI.new("#{$baseURI}ff_expressions/#{@row_index.to_s}_#{sample_index.to_s}#provenance")
-          publicationInfo = RDF::URI.new("#{$baseURI}ff_expressions/#{@row_index.to_s}_#{sample_index.to_s}#publicationInfo")
+          nanopub = RDF::URI.new("#{$base_url}ff_expressions/#{@row_index.to_s}_#{sample_index.to_s}")
+          assertion = RDF::URI.new("#{$base_url}ff_expressions/#{@row_index.to_s}_#{sample_index.to_s}#assertion")
+          provenance = RDF::URI.new("#{$base_url}ff_expressions/#{@row_index.to_s}_#{sample_index.to_s}#provenance")
+          publicationInfo = RDF::URI.new("#{$base_url}ff_expressions/#{@row_index.to_s}_#{sample_index.to_s}#publicationInfo")
 
           # main graph
           create_main_graph(nanopub, assertion, provenance, publicationInfo)
 
           # assertion graph
-          cageCluster = RDF::URI.new("#{$resourceURI}cage_cluster_#{@row_index.to_s}")
-          measurementValue = RDF::URI.new("#{$resourceURI}measurement_value_#{@row_index.to_s}_#{sample_index.to_s}")
+          cage_cluster = RDF::URI.new("#{$resource_url}cage_cluster_#{@row_index.to_s}")
+          measurementValue = RDF::URI.new("#{$resource_url}measurement_value_#{@row_index.to_s}_#{sample_index.to_s}")
 
           save(assertion, [
-              [cageCluster, SO['so_associated_with'], measurementValue],
+              [cage_cluster, SO['so_associated_with'], measurementValue],
               # IAO_0000032 = scalar measurement datum
               [measurementValue, RDF.type, IAO.IAO_0000032],
               # IAO_0000004 = has_measurement_value
               [measurementValue, IAO['IAO_0000004'], RDF::Literal.new(tpm.to_f, :datatype => RDF::XSD.double)],
               # IAO_0000039 = has_measurement_unit_label
               [measurementValue, IAO['IAO_0000039'], FFU.TPM],
-              [cageCluster, RSO['observed_in'], FF[$ffont[sample_index]]]
+              [cage_cluster, RSO['observed_in'], FF[$ffont[sample_index]]]
           ])
           
           # provenance graph

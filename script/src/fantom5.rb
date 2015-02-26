@@ -120,14 +120,15 @@ class Fantom5_Nanopub_Converter < RDF_File_Converter
 
       orientation = sign == '+' ? RSO.forward : RSO.reverse
       save(assertion, [
-          [cageCluster, RDF.type, SO.SO_0001917],
-          [cageCluster, RSO.mapsTo, location],
+          # SO_0001917 = cage cluster
+          [cageCluster, RDF.type, SO['SO_0001917']],
+          [cageCluster, RSO['mapsTo'], location],
           [cageCluster, RDFS.label, RDF::Literal.new(annotation, :datatype => XSD.string)],
-          [location, RDF.type, RSO.AnnotationLocation],
-          [location, RSO.regionOf, HG19[chromosome]],
-          [location, RSO.start, RDF::Literal.new(start_pos.to_i, :datatype => XSD.int)],
-          [location, RSO.end, RDF::Literal.new(end_pos.to_i, :datatype => XSD.int)],
-          [location, RSO.hasOrientation, orientation]
+          [location, RDF.type, RSO['AnnotationLocation']],
+          [location, RSO['regionOf'], HG19[chromosome]],
+          [location, RSO['start'], RDF::Literal.new(start_pos.to_i, :datatype => XSD.int)],
+          [location, RSO['end'], RDF::Literal.new(end_pos.to_i, :datatype => XSD.int)],
+          [location, RSO['hasOrientation'], orientation]
       ])
 
       # provenance graph
@@ -192,8 +193,9 @@ class Fantom5_Nanopub_Converter < RDF_File_Converter
        #tssRegion = RDF::URI.new("#{$resourceURI}tss_region_#{transcriptForTss}")
 
        save(assertion, [
-           [cageCluster, RSO.is_observation_of, tssRegion],
-           [tssRegion, RDF.type, SO.TSS_region]
+           [cageCluster, RSO['is_observation_of'], tssRegion],
+           # SO_0001240 = TSS_region
+           [tssRegion, RDF.type, SO['SO_0001240']]
        ])
           #[tssRegion, SO.part_of, RDF::URI.new("http://bio2rdf.org/geneid:#{entrez_id}")]
 
@@ -208,8 +210,9 @@ class Fantom5_Nanopub_Converter < RDF_File_Converter
          #puts geneID
 
          save(assertion, [
-             [tssRegion, SO.associated_with, gene],
-             [gene, RDF.type, SO.SO_0000704],
+             [tssRegion, SO['so_associated_with'], gene],
+             # SO_0000704 = gene
+             [gene, RDF.type, SO['SO_0000704']],
              [gene, DC.identifier, RDF::Literal.new(geneID, :datatype => XSD.int)],
              [gene, RDF.seeAlso, RDF::URI.new("http://linkedlifedata.com/resource/entrezgene/id/#{geneID}")]
          ])
@@ -266,14 +269,14 @@ class Fantom5_Nanopub_Converter < RDF_File_Converter
           measurementValue = RDF::URI.new("#{$resourceURI}measurement_value_#{@row_index.to_s}_#{sample_index.to_s}")
 
           save(assertion, [
-              [cageCluster, SO['associated_with'], measurementValue],
+              [cageCluster, SO['so_associated_with'], measurementValue],
               # IAO_0000032 = scalar measurement datum
               [measurementValue, RDF.type, IAO.IAO_0000032],
               # IAO_0000004 = has_measurement_value
               [measurementValue, IAO['IAO_0000004'], RDF::Literal.new(tpm.to_f, :datatype => RDF::XSD.double)],
               # IAO_0000039 = has_measurement_unit_label
               [measurementValue, IAO['IAO_0000039'], FFU.TPM],
-              [cageCluster, RSO.observed_in, FF[$ffont[sample_index]]]
+              [cageCluster, RSO['observed_in'], FF[$ffont[sample_index]]]
           ])
 
           # provenance graph

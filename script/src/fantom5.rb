@@ -52,8 +52,8 @@ class Fantom5_Nanopub_Converter < RDF_File_Converter
     $ffont = File.read('ffont.rb').split(", ")
     @NANOPUB_VERSION = 2
     # URIs string
-    $base_url = 'http://rdf.biosemantics.org/nanopubs/riken/fantom5/#{@NANOPUB_VERSION}/'
-    $resource_url = 'http://rdf.biosemantics.org/resource/riken/fantom5/#{@NANOPUB_VERSION}/'
+    $base_url = "http://rdf.biosemantics.org/nanopubs/riken/fantom5/#{@NANOPUB_VERSION}/"
+    $resource_url = "http://rdf.biosemantics.org/resource/riken/fantom5/#{@NANOPUB_VERSION}/"
     super(RDF, NP, prefixes)
   end
 

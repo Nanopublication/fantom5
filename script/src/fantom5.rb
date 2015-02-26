@@ -19,9 +19,9 @@ class Fantom5_Nanopub_Converter < RDF_File_Converter
   DC = RDF::DC
   RDFS = RDF::RDFS
   XSD = RDF::XSD
-  RSO = RDF::Vocabulary.new('http://rdf.biosemantics.org/ontologies/referencesequence#')
+  RSO = RDF::Vocabulary.new('http://rdf.biosemantics.org/ontologies/rsa#')
   HG19 = RDF::Vocabulary.new('http://rdf.biosemantics.org/data/genomeassemblies/hg19#')
-  SO = RDF::Vocabulary.new('http://purl.org/obo/owl/SO#')
+  SO = RDF::Vocabulary.new('http://purl.obolibrary.org/obo/')
   PROV = RDF::Vocabulary.new('http://www.w3.org/ns/prov#')
   OBO = RDF::Vocabulary.new('http://purl.org/obo/owl/obo#')
   PAV = RDF::Vocabulary.new('http://swan.mindinformatics.org/ontologies/1.2/pav/')

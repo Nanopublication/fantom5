@@ -170,13 +170,9 @@ class Fantom5_Nanopub_Converter < RDF_File_Converter
            [tss_region, RDF.type, SO['SO_0001240']]
        ])
        
-       number_of_genes = 0
-
        for gene_id in entrez_ids
-         
-         number_of_genes +=1
-         gene = RDF::URI.new("#{$resource_url}gene_#{@row_index.to_s}_#{number_of_genes}")
-         
+                  
+         gene = RDF::URI.new("http://www.ncbi.nlm.nih.gov/gene/#{gene_id}")         
          save(assertion, [
              [tss_region, SO['so_associated_with'], gene],
              # SO_0000704 = gene

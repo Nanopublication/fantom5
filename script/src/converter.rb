@@ -16,18 +16,14 @@ class RDF_Converter
 
     @options = get_options
     $base = RDF::Vocabulary.new(@options[:base_url])
-
-    $saveFiles = false
-
+    $save_files = true
     # tracking converter progress
     @line_number = 0 # incremented after a line is read from input
     @row_index = 0 # incremented before a line is converted.
-    @genesSkipped = 0
-
-
+    @genes_skipped = 0    
+    @rdf_statements_limit = 1000000
     $logger = Logger.new(STDOUT)
     $logger.level = Logger::INFO
-
     $RDF = rdfNs
     $NP = npNs
     $prefixes = prefix
@@ -54,8 +50,8 @@ class RDF_Converter
       $logger.info("============ running time total: #{(Time.now.utc - time_start).to_s} ============")
     end
 
-    if $saveFiles
-      closeFile()
+    if $save_files
+      close_file()
     end
 
   end 
@@ -81,7 +77,6 @@ class RDF_Converter
 
   protected
   def get_options
-
     options = Slop.parse(:help => true) do
       on :i, :input=, 'input filename', :required => true
       on :o, :output=, 'output filename'
@@ -103,31 +98,26 @@ end
 
 class RDF_File_Converter < RDF_Converter
 
-  def initialize(rdfNs, npNs, prefix)
-    super(rdfNs, npNs, prefix)
-    $saveFiles = true
-    $totalStatements = 0
-    $filesCreated = 0
-    $NoOfStatements = 0
+  def initialize(rdf_ns, np_ns, prefix)
+    super(rdf_ns, np_ns, prefix)
+    $save_files = true
+    $total_number_of_rdf_statements = 0
+    $files_created = 0
+    $number_of_rdf_statements = 0
     $file = nil
     $time_start = 0
-
   end
-
-
 
   def save(context, triples)
     triples.each do |subject, predicate, object|
 
-      if $NoOfStatements == 0
-
-        $filesCreated += 1
-        outputFile =  "#{@options[:output]}_#{$filesCreated}.nq.gz"
+      if $number_of_rdf_statements == 0
+        $files_created += 1
+        outputFile =  "#{@options[:output]}_#{$files_created}.nq.gz"
         $file = Zlib::GzipWriter.open(outputFile)
         $time_start = Time.now.utc
       end
-
-      #@file << RDF::Statement(subject.to_uri, predicate, object, :context => context.to_uri)
+      
       if object.literal?
         objectLiteral = ("\"#{object.to_s}\"^^<#{object.datatype}>")
         $file << ("<#{subject.to_uri}> <#{predicate.to_uri}> #{objectLiteral} <#{context.to_uri}> .")
@@ -136,73 +126,25 @@ class RDF_File_Converter < RDF_Converter
       end
 
       $file << "\n"
+      $number_of_rdf_statements += 1
 
-      $NoOfStatements += 1
-
-      if $NoOfStatements == 1000000
-        closeFile()
+      if $number_of_rdf_statements == @rdf_statements_limit
+        close_file()
       end
     end
 
   end
 
-  def closeFile()
+  def close_file()
 
-    $totalStatements = $totalStatements + $NoOfStatements
-    $NoOfStatements = 0
-
-    puts "No of statements in a file #{$totalStatements}"
+    $total_number_of_rdf_statements = $total_number_of_rdf_statements + $number_of_rdf_statements
+    $number_of_rdf_statements = 0
+    puts "No of statements in a file #{$total_number_of_rdf_statements}"
+    
     if $file != nil
       $file.close
     end
     $logger.info((Time.now.utc - $time_start).to_s)
   end
-
-end
-
-class RDF_Nanopub_Converter < RDF_Converter
-
-
-  def initialize(rdfNs, npNs, prefix)
-
-    super(rdfNs, npNs, prefix)
-
-    @server = AllegroGraph::Server.new(:host => @options[:host], :port => @options[:port],
-                                       :username => @options[:username], :password => @options[:password])
-
-    @catalog = @options[:catalog] ? AllegroGraph::Catalog.new(@server, @options[:catalog]) : @server
-    @repository = @RDF::AllegroGraph::Repository.new(:server => @catalog, :id => @options[:repository])
-
-    if @options[:clean]
-      @repository.clear
-    elsif @repository.size > 0 && !@options[:append]
-      puts "repository is not empty (size = #{@repository.size}). Use --clean to clear repository before import, or use --append to ignore this setting."
-      exit 1
-    end
-  end
-
-  protected
-  def save(context, triples)
-    triples.each do |subject, predicate, object|
-      @repository.insert([subject.to_uri, predicate, object, context.to_uri])
-    end
-  end
-
-  protected
-  def get_options
-    options = Slop.parse(:help => true) do
-      on :host=, 'allegro graph host, default=localhost', :default => 'localhost'
-      on :port=, 'default=10035', :as => :int, :default => 10035
-      on :catalog=
-      on :repository=, :required => true
-      on :username=
-      on :password=
-      on :clean, 'clear the repository before import', :default => false
-      on :append, 'allow adding new triples to a non-empty triple store.', :default => false
-    end
-
-    super.merge(options)
-  end
-
 
 end

@@ -71,9 +71,7 @@ class Fantom5_Nanopub_Converter < RDF_File_Converter
   def convert_row(row)
 
     @row_index += 1
-    annotation, shortDesc, description, transcriptAssociation, geneEntrez, geneHgnc, geneUniprot, *samples = row.split("\t")
-    
-    if (@row_index == 76655 || @row_index == 76656 || @row_index == 76657 || @row_index == 76658 || @row_index == 76659 || @row_index == 76660)
+    annotation, shortDesc, description, transcriptAssociation, geneEntrez, geneHgnc, geneUniprot, *samples = row.split("\t")  
 
     case @options[:subtype]
       when 'cage_clusters'
@@ -82,10 +80,7 @@ class Fantom5_Nanopub_Converter < RDF_File_Converter
         create_class2_nanopub(annotation, transcriptAssociation, geneEntrez, geneHgnc, geneUniprot)
       when 'ff_expressions'
         create_class3_nanopub(annotation, samples)
-    end
-    
-    end
-
+    end    
   end
 
   protected
@@ -145,37 +140,19 @@ class Fantom5_Nanopub_Converter < RDF_File_Converter
 
   protected
   def create_class2_nanopub(annotation, transcriptAssociation, geneEntrez, geneHgnc, geneUniprot)
+    
     if transcriptAssociation =~ /(\d+)bp_to_(.*)_5end/
-
-=begin
-        base_offset, transcripts = $1, $2
-        transcripts = transcripts.split(',')
-        transcriptForTss = transcripts[0]
-
-        for transcript in transcripts
-          if transcript =~ /^NM_/  #Note: NM transcript is preferred for tss_region url.
-            transcriptForTss = transcript
-          end
-        end
-=end
-
-      #puts "#{geneEntrez}"
       entrezGenes = geneEntrez.split(',')
       entrez_IDs = Array.new
-
-
+      
       for entrezGene in entrezGenes
         entrez_id = entrezGene.split('entrezgene:')[1]
 
         if entrez_id != '' && entrez_id !=nil
           entrez_IDs << entrez_id
         end
-
       end
-
-      #puts "Raw entrezGene : #{geneEntrez}"
-      #puts "entrez_IDs size : #{entrez_IDs.size}"
-
+      
      if  entrez_IDs.size > 0
        # setup nanopub
        nanopub = RDF::URI.new("#{$baseURI}gene_associations/#{@row_index.to_s}")
@@ -185,7 +162,6 @@ class Fantom5_Nanopub_Converter < RDF_File_Converter
 
        # main graph
        create_main_graph(nanopub, assertion, provenance, publicationInfo)
-
 
       # assertion graph
        cageCluster = RDF::URI.new("#{$resourceURI}cage_cluster_#{@row_index.to_s}")
@@ -197,8 +173,7 @@ class Fantom5_Nanopub_Converter < RDF_File_Converter
            # SO_0001240 = TSS_region
            [tssRegion, RDF.type, SO['SO_0001240']]
        ])
-          #[tssRegion, SO.part_of, RDF::URI.new("http://bio2rdf.org/geneid:#{entrez_id}")]
-
+       
        noOfGenes = 0
 
        for geneID in entrez_IDs
@@ -206,9 +181,7 @@ class Fantom5_Nanopub_Converter < RDF_File_Converter
          noOfGenes +=1
 
          gene = RDF::URI.new("#{$resourceURI}gene_#{@row_index.to_s}_#{noOfGenes}")
-
-         #puts geneID
-
+         
          save(assertion, [
              [tssRegion, SO['so_associated_with'], gene],
              # SO_0000704 = gene
@@ -221,11 +194,9 @@ class Fantom5_Nanopub_Converter < RDF_File_Converter
 
       # provenance graph
        create_provenance_graph(provenance, assertion)
-
+       
       # publication info graph
        create_publication_info_graph(publicationInfo, nanopub)
-
-      #puts "inserted nanopub <#{nanopub}>"
 
      end
 
@@ -238,23 +209,15 @@ class Fantom5_Nanopub_Converter < RDF_File_Converter
       end
     end
   end
-
-
-  $triplesPerNP = 4+5+10
-
+  
   protected
   def create_class3_nanopub(annotation, samples)
     if samples.is_a?(Array)
 
       samples.each_with_index { |tpm, sample_index|
 
-        if tpm.to_f > 0 #$ffont[sample_index] == @options[:celltype]
-
-          #@totalTriples +=$triplesPerNP
-
-          #puts "No of triples ==> #{$totalTriples}"
-
-
+        if tpm.to_f > 0
+          
           # setup nanopub
           nanopub = RDF::URI.new("#{$baseURI}ff_expressions/#{@row_index.to_s}_#{sample_index.to_s}")
           assertion = RDF::URI.new("#{$baseURI}ff_expressions/#{@row_index.to_s}_#{sample_index.to_s}#assertion")
@@ -278,7 +241,7 @@ class Fantom5_Nanopub_Converter < RDF_File_Converter
               [measurementValue, IAO['IAO_0000039'], FFU.TPM],
               [cageCluster, RSO['observed_in'], FF[$ffont[sample_index]]]
           ])
-
+          
           # provenance graph
           create_provenance_graph(provenance, assertion)
 
@@ -286,10 +249,8 @@ class Fantom5_Nanopub_Converter < RDF_File_Converter
           create_publication_info_graph(publicationInfo, nanopub)
 
         else
-          #puts "TPM ==> #{tpm}"
-
+          #puts "Sample #{$ffont[sample_index]} has tpm value ZERO"          
         end
-
       }
     else
       puts "Not an array of TPM values: #{samples} on line number #{@line_number}"
@@ -307,14 +268,6 @@ class Fantom5_Nanopub_Converter < RDF_File_Converter
 
   private
   def create_publication_info_graph(publicationInfo, nanopub)
-
-=begin
-    save(publicationInfo, [
-        [nanopub, RDF.seeAlso, RDF::URI.new("http://rdf.biosemantics.org/nanopubs/riken/fantom5/publicationInfoShared")],
-        [nanopub, DC.created, RDF::Literal.new(Time.now.utc, :datatype => XSD.dateTime)]
-        ])
-=end
-
     save(publicationInfo, [
         [nanopub, PAV.authoredBy, RDF::URI.new('http://rdf.biosemantics.org/data/riken/fantom5/project')],
         [nanopub, PAV.createdBy, RDF::Literal.new('Andrew Gibson', :datatype => XSD.string)] ,

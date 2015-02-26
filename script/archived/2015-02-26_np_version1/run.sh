@@ -1,0 +1,1 @@
+ruby fantom5.rb --input /home/raja/fantom5/fantom5DS.txt --output /home/raja/fantom5/fantom5-np/fantom5 --subtype ff_expressions --username raja --password raja --catalog system --repository test --host localhost --port 10035

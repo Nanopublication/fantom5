@@ -58,6 +58,7 @@ class Fantom5_Nanopub_Converter < RDF_File_Converter
   end
 
   @@AnnotationSignChars = '+-'
+  @CREATE_MAIN_GRAPH = false
   @CREATE_PROVENANCE_GRAPH = false
   @CREATE_PUBLICATION_INFO_GRAPH = false
 
@@ -105,7 +106,9 @@ class Fantom5_Nanopub_Converter < RDF_File_Converter
       publication_info = RDF::URI.new("#{$base_url}cage_clusters/#{@row_index.to_s}#publicationInfo")
 
       # main graph
-      create_main_graph(nanopub, assertion, provenance, publication_info)
+      if @CREATE_MAIN_GRAPH
+        create_main_graph(nanopub, assertion, provenance, publication_info)
+      end
 
       # assertion graph
       cage_cluster = RDF::URI.new("#{$resource_url}cage_cluster_#{@row_index.to_s}")
@@ -163,7 +166,9 @@ class Fantom5_Nanopub_Converter < RDF_File_Converter
        publication_info = RDF::URI.new("#{$base_url}gene_associations/#{@row_index.to_s}#publicationInfo")
 
        # main graph
-       create_main_graph(nanopub, assertion, provenance, publication_info)
+       if @CREATE_MAIN_GRAPH
+        create_main_graph(nanopub, assertion, provenance, publication_info)
+       end
 
       # assertion graph
        cage_cluster = RDF::URI.new("#{$resource_url}cage_cluster_#{@row_index.to_s}")
@@ -224,7 +229,9 @@ class Fantom5_Nanopub_Converter < RDF_File_Converter
           publication_info = RDF::URI.new("#{$base_url}ff_expressions/#{@row_index.to_s}_#{sample_index.to_s}#publicationInfo")
 
           # main graph
-          create_main_graph(nanopub, assertion, provenance, publication_info)
+          if @CREATE_MAIN_GRAPH
+            create_main_graph(nanopub, assertion, provenance, publication_info)
+          end
 
           # assertion graph
           cage_cluster = RDF::URI.new("#{$resource_url}cage_cluster_#{@row_index.to_s}")

@@ -26,6 +26,7 @@ class Fantom5_Nanopub_Converter < RDF_File_Converter
   FF = RDF::Vocabulary.new('http://purl.obolibrary.org/obo/FF_')
   IAO = RDF::Vocabulary.new('http://purl.obolibrary.org/obo/')
   FFU = RDF::Vocabulary.new('http://rdf.biosemantics.org/ontologies/fantom5Units#')
+  GENEONTO = RDF::Vocabulary.new('http://www.geneontology.org/formats/oboInOwl#')
   FANTOM5 = RDF::Vocabulary.new($resource_url)
   $base = RDF::Vocabulary.new($base_url)
 
@@ -45,11 +46,12 @@ class Fantom5_Nanopub_Converter < RDF_File_Converter
         :iao => IAO,
         :so => SO,
         :rso => RSO,
+        :geneonto => GENEONTO,
         nil => $base
     }
-
-    # read all cell types
-    $ffont = File.read('ffont.rb').split(", ")
+    @SAMPLE_INDEX = 0    
+    #$ffont = File.read('ffont.rb').split(", ")
+    $ffont = []
     @NANOPUB_VERSION = 2
     # URIs string
     $base_url = "http://rdf.biosemantics.org/nanopubs/riken/fantom5/version_#{@NANOPUB_VERSION}/"
@@ -63,8 +65,15 @@ class Fantom5_Nanopub_Converter < RDF_File_Converter
   @CREATE_PUBLICATION_INFO_GRAPH = false
 
   def convert_header_row(row)
-    # do nothing
-    # ignore summary rows
+    # extract sample id from the column header
+    if row.include? "]=TPM"
+      pattern = /CNhs(.*\])/  
+      sample_id = (pattern.match(row)).to_s
+      sample_id = sample_id.gsub("]", "")
+      $ffont[@SAMPLE_INDEX] = sample_id 
+      @SAMPLE_INDEX = @SAMPLE_INDEX + 1
+    end
+    
   end
 
   def convert_row(row)
@@ -218,10 +227,11 @@ class Fantom5_Nanopub_Converter < RDF_File_Converter
   protected
   def create_class3_nanopub(annotation, samples)
     if samples.is_a?(Array)
-
       samples.each_with_index { |tpm, sample_index|
-
-        if tpm.to_f > 0          
+        if tpm.to_f > 0
+          # get sample ID
+          sample_alternative_id = $ffont[sample_index]
+          sample_onotology_id = sample_alternative_id.split(".")[1]
           # setup nanopub
           nanopub = RDF::URI.new("#{$base_url}ff_expressions/#{@row_index.to_s}_#{sample_index.to_s}")
           assertion = RDF::URI.new("#{$base_url}ff_expressions/#{@row_index.to_s}_#{sample_index.to_s}#assertion")
@@ -236,7 +246,7 @@ class Fantom5_Nanopub_Converter < RDF_File_Converter
           # assertion graph
           cage_cluster = RDF::URI.new("#{$resource_url}cage_cluster_#{@row_index.to_s}")
           measurement_value = RDF::URI.new("#{$resource_url}measurement_value_#{@row_index.to_s}_#{sample_index.to_s}")
-
+      
           save(assertion, [
               [cage_cluster, SO['so_associated_with'], measurement_value],
               # IAO_0000032 = scalar measurement datum
@@ -245,9 +255,10 @@ class Fantom5_Nanopub_Converter < RDF_File_Converter
               [measurement_value, IAO['IAO_0000004'], RDF::Literal.new(tpm.to_f, :datatype => RDF::XSD.double)],
               # IAO_0000039 = has_measurement_unit_label
               [measurement_value, IAO['IAO_0000039'], FFU.TPM],
-              [cage_cluster, RSO['observed_in'], FF[$ffont[sample_index]]]
+              [cage_cluster, RSO['observed_in'], FF[sample_onotology_id]],
+              [FF[sample_onotology_id], GENEONTO['hasAlternativeId'], 
+              RDF::Literal.new(sample_alternative_id.to_s, :datatype => RDF::XSD.string)]
           ])
-          
           # provenance graph
           if @CREATE_PROVENANCE_GRAPH
             create_provenance_graph(provenance, assertion)

@@ -41,7 +41,6 @@ class RDF_Converter
         if @line_number % 10 == 0
           #$logger.info("============ running time: #{(Time.now.utc - time_start).to_s} ============")
         end
-
       end
       $logger.info("============ running time total: #{(Time.now.utc - time_start).to_s} ============")
     end

@@ -89,8 +89,15 @@ class Fantom5_Nanopub_Converter < RDF_File_Converter
       when 'ff_expressions'
         create_class3_nanopub(annotation, samples)
       when 'gene_linkset'
-        create_gene_mappings(annotation, transcript_association, gene_entrez, gene_hgnc, gene_uniprot)          
+        create_gene_mappings(annotation, transcript_association, gene_entrez, gene_hgnc, gene_uniprot)        
     end    
+  end    
+  
+  def create_fantom5_sample_linkset()  
+    puts("I am here")  
+    $ffont.each { |sample| 
+      puts sample      
+      } 
   end
 
   protected
@@ -276,62 +283,7 @@ class Fantom5_Nanopub_Converter < RDF_File_Converter
     end
 
   end
-  
-  protected
-  def create_fantom5_sample_linkset(annotation, samples)
-    if samples.is_a?(Array)
-      samples.each_with_index { |tpm, sample_index|
-        if tpm.to_f > 0
-          # get sample ID
-          sample_alternative_id = $ffont[sample_index]
-          sample_onotology_id = sample_alternative_id.split(".")[1]
-          # setup nanopub
-          nanopub = RDF::URI.new("#{$base_url}ff_expressions/#{@row_index.to_s}_#{sample_index.to_s}")
-          assertion = RDF::URI.new("#{$base_url}ff_expressions/#{@row_index.to_s}_#{sample_index.to_s}#assertion")
-          provenance = RDF::URI.new("#{$base_url}ff_expressions/#{@row_index.to_s}_#{sample_index.to_s}#provenance")
-          publication_info = RDF::URI.new("#{$base_url}ff_expressions/#{@row_index.to_s}_#{sample_index.to_s}#publicationInfo")
-
-          # main graph
-          if @CREATE_MAIN_GRAPH
-            create_main_graph(nanopub, assertion, provenance, publication_info)
-          end
-
-          # assertion graph
-          cage_cluster = RDF::URI.new("#{$resource_url}cage_cluster_#{@row_index.to_s}")
-          measurement_value = RDF::URI.new("#{$resource_url}measurement_value_#{@row_index.to_s}_#{sample_index.to_s}")
-      
-          save(assertion, [
-              [cage_cluster, SO['so_associated_with'], measurement_value],
-              # IAO_0000032 = scalar measurement datum
-              [measurement_value, RDF.type, IAO.IAO_0000032],
-              # IAO_0000004 = has_measurement_value
-              [measurement_value, IAO['IAO_0000004'], RDF::Literal.new(tpm.to_f, :datatype => RDF::XSD.double)],
-              # IAO_0000039 = has_measurement_unit_label
-              [measurement_value, IAO['IAO_0000039'], FFU.TPM],
-              [cage_cluster, RSO['observed_in'], FF[sample_onotology_id]],
-              [FF[sample_onotology_id], GENEONTO['hasAlternativeId'], 
-              RDF::Literal.new(sample_alternative_id.to_s, :datatype => RDF::XSD.string)]
-          ])
-          # provenance graph
-          if @CREATE_PROVENANCE_GRAPH
-            create_provenance_graph(provenance, assertion)
-          end
-
-          # publication info graph
-          if @CREATE_PUBLICATION_INFO_GRAPH
-            create_publication_info_graph(publication_info, nanopub)
-          end
-
-        else
-          #puts "Sample #{$ffont[sample_index]} has tpm value ZERO"          
-        end
-      }
-    else
-      puts "Not an array of TPM values: #{samples} on line number #{@line_number}"
-    end
-
-  end
-  
+    
   $entrez_ids = Array.new
   protected
   def create_gene_mappings(annotation, transcript_association, gene_entrez, gene_hgnc, gene_uniprot)
@@ -391,4 +343,5 @@ class Fantom5_Nanopub_Converter < RDF_File_Converter
 end
 
 # do the work
-Fantom5_Nanopub_Converter.new.convert
+#Fantom5_Nanopub_Converter.new.convert
+Fantom5_Nanopub_Converter.new.create_fantom5_sample_linkset()

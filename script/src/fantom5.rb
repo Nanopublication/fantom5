@@ -52,7 +52,10 @@ class Fantom5_Nanopub_Converter < RDF_File_Converter
     @SAMPLE_INDEX = 0    
     #$ffont = File.read('ffont.rb').split(", ")
     $ffont = []
-    @NANOPUB_VERSION = 2
+    @NANOPUB_VERSION = 2    
+    @CREATE_MAIN_GRAPH = true
+    @CREATE_PROVENANCE_GRAPH = true
+    @CREATE_PUBLICATION_INFO_GRAPH = true
     # URIs string
     $base_url = "http://rdf.biosemantics.org/nanopubs/riken/fantom5/version_#{@NANOPUB_VERSION}/"
     $resource_url = "http://rdf.biosemantics.org/resource/riken/fantom5/version_#{@NANOPUB_VERSION}/"
@@ -60,9 +63,6 @@ class Fantom5_Nanopub_Converter < RDF_File_Converter
   end
 
   @@AnnotationSignChars = '+-'
-  @CREATE_MAIN_GRAPH = false
-  @CREATE_PROVENANCE_GRAPH = false
-  @CREATE_PUBLICATION_INFO_GRAPH = false
 
   def convert_header_row(row)
     # extract sample id from the column header
@@ -93,8 +93,7 @@ class Fantom5_Nanopub_Converter < RDF_File_Converter
     end    
   end    
   
-  def create_fantom5_sample_linkset()  
-    puts("I am here")  
+  def create_fantom5_sample_linkset() 
     $ffont.each { |sample| 
       puts sample      
       } 
